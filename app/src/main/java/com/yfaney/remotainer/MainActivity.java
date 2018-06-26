@@ -12,11 +12,15 @@ import com.yfaney.remotainer.util.BluetoothManager;
 import com.yfaney.remotainer.util.IBluetoothManager;
 import com.yfaney.remotainer.util.PreferenceManager;
 
-public class MainActivity extends AppCompatActivity implements IBluetoothManager {
+import java.util.HashSet;
+import java.util.Set;
+
+public class MainActivity extends AppCompatActivity {
     public final static String KEY_CONTROLLER = "Controller";
     public final static String KEY_PLAYER = "Player";
+    public final static String REMOTAINER_PLAYER_PREFIX = "FP-";
     private static final int REQUEST_ENABLE_BLUETOOTH = 0x00000001;
-    private String runningMode = null;
+    private static final int REQUEST_DOPAIR_BLUETOOTH = 0x00000010;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,38 +32,24 @@ public class MainActivity extends AppCompatActivity implements IBluetoothManager
     protected void onStart() {
         super.onStart();
         checkBluetoothAvailability();
+        String runningMode = PreferenceManager.getRunningMode();
+        if(KEY_PLAYER.equals(runningMode)){
+            loadRemotainer(runningMode);
+        }
     }
 
+    /**
+     * Check Bluetooth Availability and open Bluetooth Setting if necessary.
+     */
     private void checkBluetoothAvailability() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter == null) {
+        if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
+        } else {
             Toast.makeText(this, "Bluetooth is not available!", Toast.LENGTH_SHORT).show();
             finish(); //automatic close app if Bluetooth service is not available!
         }
-        if (!bluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
-        }
-    }
-
-    @Override
-    public void onPairSuccess(String runningMode) {
-        loadRemotainer(runningMode);
-    }
-
-    @Override
-    public void onPairFailed(String failireReason) {
-
-    }
-
-    @Override
-    public void onReceiveDiscoveryResults(final BluetoothDevice device) {
-
-    }
-
-    @Override
-    public void onDiscoveryFinished() {
-
     }
 
     public void onClickController(View view) {
@@ -72,32 +62,45 @@ public class MainActivity extends AppCompatActivity implements IBluetoothManager
 
     private void loadRemotainer(String runningMode) {
         boolean isSuccessfullyPaird = false;
+        final BluetoothManager bluetoothManager = BluetoothManager.getSingleton();
         if (PreferenceManager.getPrePairdDevice() != null) {
-            final BluetoothManager bluetoothManager = BluetoothManager.getSingleton();
             isSuccessfullyPaird = bluetoothManager.isSuccessfullyPaired();
         }
         if (isSuccessfullyPaird) {
             if (KEY_CONTROLLER.equals(runningMode)) {
                 //Load Controller Activity
-                loadControllerService();
+                Set<BluetoothDevice> pairedDevices = new HashSet<>();
+                for (BluetoothDevice device : bluetoothManager.getAvailablePeers()){
+                    String device_name = device.getName();
+                    if(device_name.startsWith(REMOTAINER_PLAYER_PREFIX)){
+                        pairedDevices.add(device);
+                    }
+                    loadControllerService(pairedDevices);
+                }
             } else if (KEY_PLAYER.equals(runningMode)) {
                 //Load Player Activity
                 loadPlayerService();
             }
         } else {
-            final BluetoothManager bluetoothManager = BluetoothManager.getSingleton();
-            bluetoothManager.pairDevice(runningMode);
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
         }
     }
 
     private void loadPlayerService() {
+        //1. Save the current mode so that we can automatically run this mode next time
+        PreferenceManager.setRunningMode(KEY_PLAYER);
+        //2. Run Player service. No need to pass the paired bluetooth devices.
         //TODO Implement Calling Player Service
-
     }
 
-    private void loadControllerService() {
+    private void loadControllerService(final Set<BluetoothDevice> pairedDevices) {
+        //1. Save the current mode so that we can automatically run this mode next time
+        PreferenceManager.setRunningMode(KEY_CONTROLLER);
+        //2. Pass the paired BluetoothDevice instance
+        PreferenceManager.setPrePairdDevices(pairedDevices);
+        //3. Run Controller service
         //TODO Implement Calling Controller Service
-
     }
 
     @Override
@@ -106,15 +109,20 @@ public class MainActivity extends AppCompatActivity implements IBluetoothManager
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
-                // The user picked a contact.
-                // The Intent's data Uri identifies which contact was selected.
-
-                // Do something with the contact here (bigger example below)
-            }
-            else {
+                //Now Bluetooth enabled. Do nothing.
+            } else {
                 Toast.makeText(this, "Bluetooth needs to be enabled to use this app.", Toast.LENGTH_SHORT).show();
                 finish(); //automatic close app if Bluetooth service is not enabled!
             }
+        } else if (requestCode == REQUEST_DOPAIR_BLUETOOTH) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+
+            } else {
+                Toast.makeText(this, "The device needs to be paired to use this app.", Toast.LENGTH_SHORT).show();
+                finish(); //automatic close app if Bluetooth service is not enabled!
+            }
+
         }
     }
 
