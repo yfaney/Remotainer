@@ -13,12 +13,12 @@ import java.io.OutputStream;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class ChatController {
+public class MessageController {
     /* Get actual class name to be printed on */
-    final static Logger log = Logger.getLogger(ChatController.class.getName());
+    final static Logger log = Logger.getLogger(MessageController.class.getName());
 
     private static final String APP_NAME = "BluetoothChatApp";
-    private static final UUID MY_UUID = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
+    private static final UUID MY_UUID = UUID.fromString("3b152b94-2d61-4c94-96a5-24b5f0eb8bc3");
 
     private final BluetoothAdapter bluetoothAdapter;
     private final Handler handler;
@@ -32,7 +32,7 @@ public class ChatController {
     static final int STATE_CONNECTING = 2;
     static final int STATE_CONNECTED = 3;
 
-    public ChatController(Context context, Handler handler) {
+    public MessageController(Context context, Handler handler) {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         state = STATE_NONE;
 
@@ -155,14 +155,14 @@ public class ChatController {
         sendDataToFrontend("Unable to connect device");
 
         // Start the service over to restart listening mode
-        ChatController.this.start();
+        MessageController.this.start();
     }
 
     private void connectionLost() {
         sendDataToFrontend("Device connection was lost");
 
         // Start the service over to restart listening mode
-        ChatController.this.start();
+        MessageController.this.start();
     }
 
     private void sendDataToFrontend(Integer number) {
@@ -212,7 +212,7 @@ public class ChatController {
 
                 // If a connection was accepted
                 if (socket != null) {
-                    synchronized (ChatController.this) {
+                    synchronized (MessageController.this) {
                         switch (state) {
                             case STATE_LISTEN:
                             case STATE_CONNECTING:
@@ -280,7 +280,7 @@ public class ChatController {
             }
 
             // Reset the ConnectThread because we're done
-            synchronized (ChatController.this) {
+            synchronized (MessageController.this) {
                 connectThread = null;
             }
 
@@ -334,7 +334,7 @@ public class ChatController {
                 } catch (IOException e) {
                     connectionLost();
                     // Start the service over to restart listening mode
-                    ChatController.this.start();
+                    MessageController.this.start();
                     break;
                 }
             }

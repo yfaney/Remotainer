@@ -46,10 +46,6 @@ public class BluetoothManager {
         return false;
     }
 
-    public void pairDevice(String runningMode) {
-        iBluetoothManager.onPairSuccess(runningMode);
-    }
-
     public BluetoothAdapter getBluetoothAdapter() {
         return bluetoothAdapter;
     }
