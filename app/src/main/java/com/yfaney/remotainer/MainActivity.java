@@ -31,7 +31,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
         checkBluetoothAvailability();
+
         String runningMode = PreferenceManager.getRunningMode();
         if(KEY_PLAYER.equals(runningMode)){
             loadRemotainer(runningMode);
