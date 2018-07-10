@@ -2,8 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.yfaney.remotainer">
 
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.ACCESS_WIFI_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.CHANGE_WIFI_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -28,10 +38,16 @@
         <activity android:name=".control.PlayListActivity" />
         <activity android:name=".control.FileTransferActivity">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".WiFiDirectBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"></receiver>
     </application>
 
 </manifest>
